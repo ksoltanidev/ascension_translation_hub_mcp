@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { TABLES } from "./tables.js";
 
-const BASE_URL = "http://translation-hub.darkuniverse.work/api/v1";
+const BASE_URL = "https://translation-hub.darkuniverse.work/api/v1";
 
 const API_KEY = process.env.TRANSLATION_API_KEY ?? "";
 
@@ -24,9 +24,10 @@ async function apiRequest(
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  if (res.status === 503) {
+  if (res.status === 429 || res.status === 503) {
     const retryAfter = res.headers.get("Retry-After");
-    return { error: "Service temporarily unavailable (CPU guard)", retryAfter };
+    const reason = res.status === 429 ? "Rate limit exceeded (50 req/s cap)" : "Service temporarily unavailable (CPU guard)";
+    return { error: reason, retryAfter };
   }
 
   if (!res.ok) {
@@ -103,9 +104,13 @@ server.tool(
       .max(200)
       .optional()
       .describe("Max results (default 50, max 200)"),
+    include_submission_status: z
+      .coerce.boolean()
+      .optional()
+      .describe("Add submission_status and can_submit hints to results (default false)"),
   },
-  async ({ q, locale, table, accepted_only, limit }) => {
-    const query = buildQuery({ q, locale, table, accepted_only, limit });
+  async ({ q, locale, table, accepted_only, limit, include_submission_status }) => {
+    const query = buildQuery({ q, locale, table, accepted_only, limit, include_submission_status });
     const data = await apiRequest(`/translations/search${query}`);
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }

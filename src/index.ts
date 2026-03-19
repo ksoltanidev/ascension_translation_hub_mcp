@@ -61,11 +61,11 @@ server.tool(
   "List available translation source tables",
   {
     from_cache: z
-      .boolean()
+      .coerce.boolean()
       .optional()
       .describe("Return cached table list instead of calling the API (default false)"),
     limit: z
-      .number()
+      .coerce.number()
       .min(1)
       .max(500)
       .optional()
@@ -94,11 +94,11 @@ server.tool(
     locale: localeEnum,
     table: z.string().optional().describe("Source table filter"),
     accepted_only: z
-      .boolean()
+      .coerce.boolean()
       .optional()
       .describe("Only accepted translations (default true)"),
     limit: z
-      .number()
+      .coerce.number()
       .min(1)
       .max(200)
       .optional()
@@ -119,13 +119,13 @@ server.tool(
     locale: localeEnum,
     table: z.string().optional().describe("Source table filter"),
     limit: z
-      .number()
+      .coerce.number()
       .min(1)
       .max(1000)
       .optional()
       .describe("Max results (default 500, max 1000)"),
     offset: z
-      .number()
+      .coerce.number()
       .min(0)
       .max(5000000)
       .optional()
@@ -143,7 +143,7 @@ server.tool(
   "get_context",
   "Get context for a specific translation entry",
   {
-    translation_id: z.number().describe("Translation ID"),
+    translation_id: z.coerce.number().describe("Translation ID"),
     locale: localeEnum,
   },
   async ({ translation_id, locale }) => {
@@ -165,8 +165,8 @@ server.tool(
       .optional()
       .describe("Filter by status"),
     locale: localeEnum,
-    limit: z.number().min(1).max(100).optional().describe("Max results (default 100)"),
-    offset: z.number().min(0).optional().describe("Pagination offset"),
+    limit: z.coerce.number().min(1).max(100).optional().describe("Max results (default 100)"),
+    offset: z.coerce.number().min(0).optional().describe("Pagination offset"),
   },
   async ({ status, locale, limit, offset }) => {
     const query = buildQuery({ status, locale, limit, offset });
@@ -180,7 +180,7 @@ server.tool(
   "create_submission",
   "Submit a translation for review",
   {
-    translation_id: z.number().describe("ID of the translation entry"),
+    translation_id: z.coerce.number().describe("ID of the translation entry"),
     locale: z
       .enum(["frFR", "deDE", "esES", "ruRU", "esMX", "zhCN"])
       .describe("Target locale"),
@@ -204,7 +204,7 @@ server.tool(
   "edit_submission",
   "Edit one of your pending submissions",
   {
-    change_id: z.number().describe("Submission change ID"),
+    change_id: z.coerce.number().describe("Submission change ID"),
     value: z.string().describe("Updated translated text"),
     submission_comment: z
       .string()

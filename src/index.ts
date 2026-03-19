@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { TABLES } from "./tables.js";
 
 const BASE_URL = "http://translation-hub.darkuniverse.work/api/v1";
 
@@ -59,6 +60,10 @@ server.tool(
   "list_tables",
   "List available translation source tables",
   {
+    from_cache: z
+      .boolean()
+      .optional()
+      .describe("Return cached table list instead of calling the API (default false)"),
     limit: z
       .number()
       .min(1)
@@ -66,7 +71,14 @@ server.tool(
       .optional()
       .describe("Max results (default 200, max 500)"),
   },
-  async ({ limit }) => {
+  async ({ from_cache, limit }) => {
+    if (from_cache) {
+      return {
+        content: [
+          { type: "text", text: JSON.stringify({ tables: TABLES, count: TABLES.length }, null, 2) },
+        ],
+      };
+    }
     const query = buildQuery({ limit });
     const data = await apiRequest(`/translations/tables${query}`);
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };

@@ -112,9 +112,22 @@ server.tool(
       .coerce.boolean()
       .optional()
       .describe("Include entries with no translation for the locale (default false)"),
+    offset: z
+      .coerce.number()
+      .min(0)
+      .optional()
+      .describe("Pagination offset (default 0)"),
+    exact: z
+      .coerce.boolean()
+      .optional()
+      .describe("Exact match instead of contains (default false)"),
+    treat_same_as_missing: z
+      .coerce.boolean()
+      .optional()
+      .describe("Treat enUS == locale as missing (default false)"),
   },
-  async ({ q, locale, table, accepted_only, limit, include_submission_status, include_untranslated }) => {
-    const query = buildQuery({ q, locale, table, accepted_only, limit, include_submission_status, include_untranslated });
+  async ({ q, locale, table, accepted_only, limit, include_submission_status, include_untranslated, offset, exact, treat_same_as_missing }) => {
+    const query = buildQuery({ q, locale, table, accepted_only, limit, include_submission_status, include_untranslated, offset, exact, treat_same_as_missing });
     const data = await apiRequest(`/translations/search${query}`);
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
@@ -202,6 +215,30 @@ server.tool(
   async ({ translation_id, locale, value, submission_comment }) => {
     const data = await apiRequest("/account/submissions", {
       method: "POST",
+      body: { translation_id, locale, value, submission_comment },
+    });
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// --- Amend existing translation ---
+server.tool(
+  "amend_submission",
+  "Propose an improved translation for an existing entry (low priority)",
+  {
+    translation_id: z.coerce.number().describe("ID of the translation entry"),
+    locale: z
+      .enum(["frFR", "deDE", "esES", "ruRU", "esMX", "zhCN"])
+      .describe("Target locale"),
+    value: z.string().describe("Improved translated text"),
+    submission_comment: z
+      .string()
+      .optional()
+      .describe("Optional note about the improvement"),
+  },
+  async ({ translation_id, locale, value, submission_comment }) => {
+    const data = await apiRequest("/account/submissions/amend", {
+      method: "PATCH",
       body: { translation_id, locale, value, submission_comment },
     });
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };

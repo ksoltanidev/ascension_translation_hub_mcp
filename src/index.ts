@@ -108,9 +108,13 @@ server.tool(
       .coerce.boolean()
       .optional()
       .describe("Add submission_status and can_submit hints to results (default false)"),
+    include_untranslated: z
+      .coerce.boolean()
+      .optional()
+      .describe("Include entries with no translation for the locale (default false)"),
   },
-  async ({ q, locale, table, accepted_only, limit, include_submission_status }) => {
-    const query = buildQuery({ q, locale, table, accepted_only, limit, include_submission_status });
+  async ({ q, locale, table, accepted_only, limit, include_submission_status, include_untranslated }) => {
+    const query = buildQuery({ q, locale, table, accepted_only, limit, include_submission_status, include_untranslated });
     const data = await apiRequest(`/translations/search${query}`);
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
